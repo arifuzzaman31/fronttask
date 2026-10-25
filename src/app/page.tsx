@@ -1,69 +1,112 @@
-import Image from "next/image";
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+const demoUsers = [
+  { label: "Admin", email: "admin@notes.dev", password: "admin1234" },
+  { label: "Ana", email: "ana@notes.dev", password: "ana123456" },
+  { label: "Ben", email: "ben@notes.dev", password: "ben123456" },
+  { label: "Chloe", email: "chloe@notes.dev", password: "chloe1234" },
+];
+
+const interestOptions = ["chess", "reading", "hiking", "ops", "music", "coding"];
 
 export default function Home() {
+  const [isLogin, setIsLogin] = useState(true);
+  const [form, setForm] = useState({ name: "", email: "", password: "", interests: [] as string[] });
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  const useDemo = (u: typeof demoUsers[0]) => {
+    setForm({ ...form, email: u.email, password: u.password });
+    setIsLogin(true);
+  };
+
+  const toggleInterest = (interest: string) => {
+    setForm((prev) => ({
+      ...prev,
+      interests: prev.interests.includes(interest)
+        ? prev.interests.filter((i) => i !== interest)
+        : [...prev.interests, interest],
+    }));
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    try {
+      if (isLogin) {
+        const res = await fetch(`${API}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: form.email, password: form.password }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Login failed");
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        router.push("/dashboard");
+      } else {
+        const res = await fetch(`${API}/api/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: form.name, email: form.email, password: form.password, interests: form.interests }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Register failed");
+        setIsLogin(true);
+        setForm({ name: "", email: "", password: "", interests: [] });
+      }
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
+        <h1 className="text-2xl font-bold mb-6 text-center">{isLogin ? "Login" : "Register"}</h1>
+        {isLogin && (
+          <div className="mb-4">
+            <p className="text-sm mb-2 text-gray-600">Quick login:</p>
+            <div className="flex flex-wrap gap-2">
+              {demoUsers.map((u) => (
+                <button key={u.email} type="button" onClick={() => useDemo(u)} className="text-xs bg-gray-100 px-2 py-1 rounded hover:bg-gray-200">
+                  {u.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        <form onSubmit={submit} className="space-y-4">
+          {!isLogin && (
+            <>
+              <input className="w-full border p-2 rounded" placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              <div>
+                <p className="text-sm mb-2 text-gray-600">Interests</p>
+                <div className="flex flex-wrap gap-2">
+                  {interestOptions.map((interest) => (
+                    <label key={interest} className="flex items-center gap-1 text-sm">
+                      <input type="checkbox" checked={form.interests.includes(interest)} onChange={() => toggleInterest(interest)} />
+                      {interest}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+          <input className="w-full border p-2 rounded" type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+          <input className="w-full border p-2 rounded" type="password" placeholder="Password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <button className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">{isLogin ? "Login" : "Register"}</button>
+        </form>
+        <p className="mt-4 text-center text-sm">
+          {isLogin ? "No account? " : "Have account? "}
+          <button className="text-blue-600" onClick={() => setIsLogin(!isLogin)}>{isLogin ? "Register" : "Login"}</button>
+        </p>
+      </div>
     </div>
   );
 }
