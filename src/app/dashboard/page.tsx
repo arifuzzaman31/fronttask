@@ -1,116 +1,236 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001").replace(/\/+$/, "");
 
+type UserSummary = { _id: string; name: string; role: string };
+type Note = { _id: string; title: string; body?: string; owner?: string };
+type AdminUser = {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  interests?: string[];
+};
+type Post = { _id: string; title: string; body?: string; author?: string };
+
+const asArray = <T,>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
+
+const getToken = () => {
+  try {
+    return localStorage.getItem("token");
+  } catch {
+    return null;
+  }
+};
+
+const getStoredUser = (): UserSummary | null => {
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    if (
+      typeof parsed._id !== "string" ||
+      typeof parsed.name !== "string" ||
+      typeof parsed.role !== "string"
+    ) {
+      return null;
+    }
+    return { _id: parsed._id, name: parsed.name, role: parsed.role };
+  } catch {
+    try {
+      localStorage.removeItem("user");
+    } catch {}
+    return null;
+  }
+};
+
+const messageOf = (err: unknown, fallback: string) =>
+  err instanceof Error && err.message ? err.message : fallback;
+
+const request = async (path: string, init: RequestInit = {}) => {
+  const token = getToken();
+  const headers = new Headers(init.headers);
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+
+  const res = await fetch(`${API}${path}`, { ...init, headers });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      typeof data?.error === "string" ? data.error : `Request failed (${res.status})`
+    );
+  }
+  return data;
+};
+
 export default function Dashboard() {
-  const [user, setUser] = useState<any>(null);
-  const [notes, setNotes] = useState<any[]>([]);
-  const [allNotes, setAllNotes] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
-  const [posts, setPosts] = useState<any[]>([]);
+  const [user, setUser] = useState<UserSummary | null>(null);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [allNotes, setAllNotes] = useState<Note[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [form, setForm] = useState({ title: "", body: "" });
   const [postForm, setPostForm] = useState({ title: "", body: "" });
-  const [edit, setEdit] = useState<any>(null);
-  const [editPost, setEditPost] = useState<any>(null);
+  const [edit, setEdit] = useState<Note | null>(null);
+  const [editPost, setEditPost] = useState<Post | null>(null);
+  const [error, setError] = useState("");
   const router = useRouter();
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
-  useEffect(() => {
-    if (!token) { router.push("/"); return; }
-    const u = localStorage.getItem("user");
-    if (u) setUser(JSON.parse(u));
-    loadNotes();
-    loadPosts();
-    if (u && JSON.parse(u).role === "admin") {
-      loadAllNotes();
-      loadUsers();
+  const loadNotes = useCallback(async () => {
+    try {
+      const data = await request("/api/notes");
+      setNotes(asArray<Note>(data.data));
+    } catch (err) {
+      setError(messageOf(err, "Could not load notes."));
     }
   }, []);
 
-  const loadNotes = async () => {
-    const res = await fetch(`${API}/api/notes`, { headers: { Authorization: `Bearer ${token}` } });
-    const data = await res.json();
-    setNotes(data.data || []);
-  };
+  const loadAllNotes = useCallback(async () => {
+    try {
+      const data = await request("/api/admin/notes");
+      setAllNotes(asArray<Note>(data.data));
+    } catch (err) {
+      setError(messageOf(err, "Could not load all notes."));
+    }
+  }, []);
 
-  const loadAllNotes = async () => {
-    const res = await fetch(`${API}/api/admin/notes`, { headers: { Authorization: `Bearer ${token}` } });
-    const data = await res.json();
-    setAllNotes(data.data || []);
-  };
+  const loadUsers = useCallback(async () => {
+    try {
+      const data = await request("/api/admin/users");
+      setUsers(asArray<AdminUser>(data.data));
+    } catch (err) {
+      setError(messageOf(err, "Could not load users."));
+    }
+  }, []);
 
-  const loadUsers = async () => {
-    const res = await fetch(`${API}/api/admin/users`, { headers: { Authorization: `Bearer ${token}` } });
-    const data = await res.json();
-    setUsers(data.data || []);
-  };
+  const loadPosts = useCallback(async () => {
+    try {
+      const data = await request("/api/posts");
+      setPosts(asArray<Post>(data.data));
+    } catch (err) {
+      setError(messageOf(err, "Could not load posts."));
+    }
+  }, []);
 
-  const loadPosts = async () => {
-    const res = await fetch(`${API}/api/posts`);
-    const data = await res.json();
-    setPosts(data.data || []);
-  };
+  useEffect(() => {
+    const token = getToken();
+    const storedUser = getStoredUser();
+    if (!token || !storedUser) {
+      try {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      } catch {}
+      router.replace("/");
+      return;
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setUser(storedUser);
+    void loadNotes();
+    void loadPosts();
+    if (storedUser.role === "admin") {
+      void loadAllNotes();
+      void loadUsers();
+    }
+  }, [router, loadNotes, loadPosts, loadAllNotes, loadUsers]);
 
   const createNote = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch(`${API}/api/notes`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(form),
-    });
-    if (res.ok) { setForm({ title: "", body: "" }); loadNotes(); if (user?.role === "admin") loadAllNotes(); }
+    setError("");
+    try {
+      await request("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      setForm({ title: "", body: "" });
+      await loadNotes();
+      if (user?.role === "admin") await loadAllNotes();
+    } catch (err) {
+      setError(messageOf(err, "Could not create note."));
+    }
   };
 
   const createPost = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch(`${API}/api/posts`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(postForm),
-    });
-    if (res.ok) { setPostForm({ title: "", body: "" }); loadPosts(); }
+    setError("");
+    try {
+      await request("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(postForm),
+      });
+      setPostForm({ title: "", body: "" });
+      await loadPosts();
+    } catch (err) {
+      setError(messageOf(err, "Could not create post."));
+    }
   };
 
   const updatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch(`${API}/api/posts/${editPost._id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ title: editPost.title, body: editPost.body }),
-    });
-    if (res.ok) { setEditPost(null); loadPosts(); }
+    if (!editPost) return;
+    setError("");
+    try {
+      await request(`/api/posts/${editPost._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: editPost.title, body: editPost.body }),
+      });
+      setEditPost(null);
+      await loadPosts();
+    } catch (err) {
+      setError(messageOf(err, "Could not update post."));
+    }
   };
 
   const deletePost = async (id: string) => {
-    const res = await fetch(`${API}/api/posts/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) { loadPosts(); }
+    setError("");
+    try {
+      await request(`/api/posts/${id}`, { method: "DELETE" });
+      await loadPosts();
+    } catch (err) {
+      setError(messageOf(err, "Could not delete post."));
+    }
   };
 
   const updateNote = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch(`${API}/api/notes/${edit._id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ title: edit.title, body: edit.body }),
-    });
-    if (res.ok) { setEdit(null); loadNotes(); if (user?.role === "admin") loadAllNotes(); }
+    if (!edit) return;
+    setError("");
+    try {
+      await request(`/api/notes/${edit._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: edit.title, body: edit.body }),
+      });
+      setEdit(null);
+      await loadNotes();
+      if (user?.role === "admin") await loadAllNotes();
+    } catch (err) {
+      setError(messageOf(err, "Could not update note."));
+    }
   };
 
   const deleteNote = async (id: string) => {
-    const res = await fetch(`${API}/api/notes/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) { loadNotes(); if (user?.role === "admin") loadAllNotes(); }
+    setError("");
+    try {
+      await request(`/api/notes/${id}`, { method: "DELETE" });
+      await loadNotes();
+      if (user?.role === "admin") await loadAllNotes();
+    } catch (err) {
+      setError(messageOf(err, "Could not delete note."));
+    }
   };
 
-  const logout = () => { localStorage.clear(); router.push("/"); };
+  const logout = () => {
+    try {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    } catch {}
+    router.replace("/");
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -122,6 +242,15 @@ export default function Dashboard() {
             <button onClick={logout} className="bg-gray-200 px-3 py-1 rounded">Logout</button>
           </div>
         </div>
+
+        {error && (
+          <div className="mb-4 flex items-center justify-between gap-3 rounded bg-red-50 px-4 py-3 text-sm text-red-700">
+            <span>{error}</span>
+            <button type="button" onClick={() => setError("")} className="font-medium">
+              Dismiss
+            </button>
+          </div>
+        )}
 
         <div className="bg-white p-4 rounded shadow mb-6">
           <h2 className="font-bold mb-2">Create Note</h2>

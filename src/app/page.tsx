@@ -19,7 +19,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const router = useRouter();
 
-  const useDemo = (u: typeof demoUsers[0]) => {
+  const applyDemo = (u: typeof demoUsers[0]) => {
     setForm({ ...form, email: u.email, password: u.password });
     setIsLogin(true);
   };
@@ -45,6 +45,7 @@ export default function Home() {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Login failed");
+        if (!data.token || !data.user) throw new Error("Invalid login response");
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
         router.push("/dashboard");
@@ -59,8 +60,8 @@ export default function Home() {
         setIsLogin(true);
         setForm({ name: "", email: "", password: "", interests: [] });
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
     }
   };
 
@@ -73,7 +74,7 @@ export default function Home() {
             <p className="text-sm mb-2 text-gray-600">Quick login:</p>
             <div className="flex flex-wrap gap-2">
               {demoUsers.map((u) => (
-                <button key={u.email} type="button" onClick={() => useDemo(u)} className="text-xs bg-gray-100 px-2 py-1 rounded hover:bg-gray-200">
+                <button key={u.email} type="button" onClick={() => applyDemo(u)} className="text-xs bg-gray-100 px-2 py-1 rounded hover:bg-gray-200">
                   {u.label}
                 </button>
               ))}
