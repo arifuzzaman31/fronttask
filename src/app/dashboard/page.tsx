@@ -13,7 +13,7 @@ type AdminUser = {
   role: string;
   interests?: string[];
 };
-type Post = { _id: string; title: string; body?: string; author?: string };
+type Post = { _id: string; title: string; body?: string; author?: any };
 
 const asArray = <T,>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
 
@@ -291,21 +291,27 @@ export default function Dashboard() {
         <div className="bg-white p-4 rounded shadow mb-6">
           <h2 className="font-bold mb-2">Posts (Public Feed)</h2>
           <div className="space-y-2">
-            {posts.map((p) => (
-              <div key={p._id} className="border p-3 rounded flex justify-between">
-                <div>
-                  <h3 className="font-semibold">{p.title}</h3>
-                  <p className="text-sm text-gray-600">{p.body}</p>
-                  <p className="text-xs text-gray-400">by {p.author}</p>
-                </div>
-                {user && p.author === user._id && (
-                  <div className="flex gap-2">
-                    <button onClick={() => setEditPost(p)} className="text-blue-600">Edit</button>
-                    <button onClick={() => deletePost(p._id)} className="text-red-600">Delete</button>
+            {posts.map((p) => {
+              const authorObj = typeof p.author === "object" && p.author !== null ? (p.author as any) : null;
+              const authorId = authorObj?._id || (typeof p.author === "string" ? p.author : undefined);
+              const authorName = authorObj?.name || (typeof p.author === "string" ? p.author : "");
+              const canEdit = user && authorId === user._id;
+              return (
+                <div key={p._id} className="border p-3 rounded flex justify-between">
+                  <div>
+                    <h3 className="font-semibold">{p.title}</h3>
+                    <p className="text-sm text-gray-600">{p.body}</p>
+                    {authorName && <p className="text-xs text-gray-400">by {authorName}</p>}
                   </div>
-                )}
-              </div>
-            ))}
+                  {canEdit && (
+                    <div className="flex gap-2">
+                      <button onClick={() => setEditPost(p)} className="text-blue-600">Edit</button>
+                      <button onClick={() => deletePost(p._id)} className="text-red-600">Delete</button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
