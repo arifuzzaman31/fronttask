@@ -66,15 +66,15 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6 text-center">{isLogin ? "Login" : "Register"}</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 text-foreground">
+      <div className="bg-white dark:bg-gray-900 p-8 rounded shadow-md w-full max-w-md">
+        <h1 className="text-2xl font-bold mb-6 text-center text-foreground">{isLogin ? "Login" : "Register"}</h1>
         {isLogin && (
           <div className="mb-4">
-            <p className="text-sm mb-2 text-gray-600">Quick login:</p>
+            <p className="text-sm mb-2 text-gray-600 dark:text-gray-400">Quick login:</p>
             <div className="flex flex-wrap gap-2">
               {demoUsers.map((u) => (
-                <button key={u.email} type="button" onClick={() => applyDemo(u)} className="text-xs bg-gray-100 px-2 py-1 rounded hover:bg-gray-200">
+                <button key={u.email} type="button" onClick={() => applyDemo(u)} className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
                   {u.label}
                 </button>
               ))}
@@ -84,12 +84,12 @@ export default function Home() {
         <form onSubmit={submit} className="space-y-4">
           {!isLogin && (
             <>
-              <input className="w-full border p-2 rounded" placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              <input className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-foreground p-2 rounded" placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
               <div>
-                <p className="text-sm mb-2 text-gray-600">Interests</p>
+                <p className="text-sm mb-2 text-gray-600 dark:text-gray-400">Interests</p>
                 <div className="flex flex-wrap gap-2">
                   {interestOptions.map((interest) => (
-                    <label key={interest} className="flex items-center gap-1 text-sm">
+                    <label key={interest} className="flex items-center gap-1 text-sm text-foreground">
                       <input type="checkbox" checked={form.interests.includes(interest)} onChange={() => toggleInterest(interest)} />
                       {interest}
                     </label>
@@ -98,12 +98,12 @@ export default function Home() {
               </div>
             </>
           )}
-          <input className="w-full border p-2 rounded" type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
-          <input className="w-full border p-2 rounded" type="password" placeholder="Password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+          <input className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-foreground p-2 rounded" type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+          <input className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-foreground p-2 rounded" type="password" placeholder="Password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <button className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">{isLogin ? "Login" : "Register"}</button>
         </form>
-        <p className="mt-4 text-center text-sm">
+        <p className="mt-4 text-center text-sm text-foreground">
           {isLogin ? "No account? " : "Have account? "}
           <button className="text-blue-600" onClick={() => setIsLogin(!isLogin)}>{isLogin ? "Register" : "Login"}</button>
         </p>

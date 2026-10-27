@@ -236,10 +236,10 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Notes App</h1>
+          <h1 className="text-2xl font-bold text-foreground">Notes App</h1>
           <div className="flex items-center gap-4">
-            <span>{user?.name} ({user?.role})</span>
-            <button onClick={logout} className="bg-gray-200 px-3 py-1 rounded">Logout</button>
+            <span className="text-foreground">{user?.name} ({user?.role})</span>
+            <button onClick={logout} className="bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100 px-3 py-1 rounded">Logout</button>
           </div>
         </div>
 
@@ -252,32 +252,32 @@ export default function Dashboard() {
           </div>
         )}
 
-        <div className="bg-white p-4 rounded shadow mb-6">
-          <h2 className="font-bold mb-2">Create Note</h2>
+        <div className="bg-white dark:bg-gray-900 text-foreground p-4 rounded shadow mb-6">
+          <h2 className="font-bold mb-2 text-foreground">Create Note</h2>
           <form onSubmit={createNote} className="space-y-2">
-            <input className="w-full border p-2 rounded" placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
-            <textarea className="w-full border p-2 rounded" placeholder="Body" value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} />
+            <input className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-foreground p-2 rounded" placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+            <textarea className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-foreground p-2 rounded" placeholder="Body" value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} />
             <button className="bg-blue-600 text-white px-4 py-2 rounded">Create</button>
           </form>
         </div>
 
-        <div className="bg-white p-4 rounded shadow mb-6">
-          <h2 className="font-bold mb-2">Create Post</h2>
+        <div className="bg-white dark:bg-gray-900 text-foreground p-4 rounded shadow mb-6">
+          <h2 className="font-bold mb-2 text-foreground">Create Post</h2>
           <form onSubmit={createPost} className="space-y-2">
-            <input className="w-full border p-2 rounded" placeholder="Title" value={postForm.title} onChange={(e) => setPostForm({ ...postForm, title: e.target.value })} required />
-            <textarea className="w-full border p-2 rounded" placeholder="Body" value={postForm.body} onChange={(e) => setPostForm({ ...postForm, body: e.target.value })} />
+            <input className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-foreground p-2 rounded" placeholder="Title" value={postForm.title} onChange={(e) => setPostForm({ ...postForm, title: e.target.value })} required />
+            <textarea className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-foreground p-2 rounded" placeholder="Body" value={postForm.body} onChange={(e) => setPostForm({ ...postForm, body: e.target.value })} />
             <button className="bg-purple-600 text-white px-4 py-2 rounded">Create Post</button>
           </form>
         </div>
 
-        <div className="bg-white p-4 rounded shadow mb-6">
-          <h2 className="font-bold mb-2">My Notes</h2>
+        <div className="bg-white dark:bg-gray-900 text-foreground p-4 rounded shadow mb-6">
+          <h2 className="font-bold mb-2 text-foreground">My Notes</h2>
           <div className="space-y-2">
             {notes.map((n) => (
-              <div key={n._id} className="border p-3 rounded flex justify-between">
+              <div key={n._id} className="border border-gray-200 dark:border-gray-700 p-3 rounded flex justify-between">
                 <div>
-                  <h3 className="font-semibold">{n.title}</h3>
-                  <p className="text-sm text-gray-600">{n.body}</p>
+                  <h3 className="font-semibold text-foreground">{n.title}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{n.body}</p>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => setEdit(n)} className="text-blue-600">Edit</button>
@@ -288,8 +288,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded shadow mb-6">
-          <h2 className="font-bold mb-2">Posts (Public Feed)</h2>
+        <div className="bg-white dark:bg-gray-900 text-foreground p-4 rounded shadow mb-6">
+          <h2 className="font-bold mb-2 text-foreground">Posts (Public Feed)</h2>
           <div className="space-y-2">
             {posts.map((p) => {
               const authorObj = typeof p.author === "object" && p.author !== null ? (p.author as any) : null;
@@ -297,10 +297,10 @@ export default function Dashboard() {
               const authorName = authorObj?.name || (typeof p.author === "string" ? p.author : "");
               const canEdit = user && authorId === user._id;
               return (
-                <div key={p._id} className="border p-3 rounded flex justify-between">
+                <div key={p._id} className="border border-gray-200 dark:border-gray-700 p-3 rounded flex justify-between">
                   <div>
-                    <h3 className="font-semibold">{p.title}</h3>
-                    <p className="text-sm text-gray-600">{p.body}</p>
+                    <h3 className="font-semibold text-foreground">{p.title}</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{p.body}</p>
                     {authorName && <p className="text-xs text-gray-400">by {authorName}</p>}
                   </div>
                   {canEdit && (
@@ -316,28 +316,28 @@ export default function Dashboard() {
         </div>
 
         {editPost && (
-          <div className="bg-white p-4 rounded shadow mb-6">
-            <h2 className="font-bold mb-2">Edit Post</h2>
+          <div className="bg-white dark:bg-gray-900 text-foreground p-4 rounded shadow mb-6">
+            <h2 className="font-bold mb-2 text-foreground">Edit Post</h2>
             <form onSubmit={updatePost} className="space-y-2">
-              <input className="w-full border p-2 rounded" value={editPost.title} onChange={(e) => setEditPost({ ...editPost, title: e.target.value })} />
-              <textarea className="w-full border p-2 rounded" value={editPost.body} onChange={(e) => setEditPost({ ...editPost, body: e.target.value })} />
+              <input className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-foreground p-2 rounded" value={editPost.title} onChange={(e) => setEditPost({ ...editPost, title: e.target.value })} />
+              <textarea className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-foreground p-2 rounded" value={editPost.body} onChange={(e) => setEditPost({ ...editPost, body: e.target.value })} />
               <div className="flex gap-2">
                 <button className="bg-green-600 text-white px-4 py-2 rounded">Save</button>
-                <button type="button" onClick={() => setEditPost(null)} className="bg-gray-200 px-4 py-2 rounded">Cancel</button>
+                <button type="button" onClick={() => setEditPost(null)} className="bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100 px-4 py-2 rounded">Cancel</button>
               </div>
             </form>
           </div>
         )}
 
         {edit && (
-          <div className="bg-white p-4 rounded shadow mb-6">
-            <h2 className="font-bold mb-2">Edit Note</h2>
+          <div className="bg-white dark:bg-gray-900 text-foreground p-4 rounded shadow mb-6">
+            <h2 className="font-bold mb-2 text-foreground">Edit Note</h2>
             <form onSubmit={updateNote} className="space-y-2">
-              <input className="w-full border p-2 rounded" value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} />
-              <textarea className="w-full border p-2 rounded" value={edit.body} onChange={(e) => setEdit({ ...edit, body: e.target.value })} />
+              <input className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-foreground p-2 rounded" value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} />
+              <textarea className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-foreground p-2 rounded" value={edit.body} onChange={(e) => setEdit({ ...edit, body: e.target.value })} />
               <div className="flex gap-2">
                 <button className="bg-green-600 text-white px-4 py-2 rounded">Save</button>
-                <button type="button" onClick={() => setEdit(null)} className="bg-gray-200 px-4 py-2 rounded">Cancel</button>
+                <button type="button" onClick={() => setEdit(null)} className="bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100 px-4 py-2 rounded">Cancel</button>
               </div>
             </form>
           </div>
@@ -345,26 +345,26 @@ export default function Dashboard() {
 
         {user?.role === "admin" && (
           <>
-            <div className="bg-white p-4 rounded shadow mb-6">
-              <h2 className="font-bold mb-2">All Notes (Admin)</h2>
+            <div className="bg-white dark:bg-gray-900 text-foreground p-4 rounded shadow mb-6">
+              <h2 className="font-bold mb-2 text-foreground">All Notes (Admin)</h2>
               <div className="space-y-2">
                 {allNotes.map((n) => (
-                  <div key={n._id} className="border p-3 rounded">
-                    <h3 className="font-semibold">{n.title}</h3>
-                    <p className="text-sm text-gray-600">{n.body}</p>
+                  <div key={n._id} className="border border-gray-200 dark:border-gray-700 p-3 rounded">
+                    <h3 className="font-semibold text-foreground">{n.title}</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{n.body}</p>
                     <p className="text-xs text-gray-400">owner: {n.owner}</p>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="bg-white p-4 rounded shadow">
-              <h2 className="font-bold mb-2">Users (Admin)</h2>
+            <div className="bg-white dark:bg-gray-900 text-foreground p-4 rounded shadow">
+              <h2 className="font-bold mb-2 text-foreground">Users (Admin)</h2>
               <div className="space-y-2">
                 {users.map((u) => (
-                  <div key={u._id} className="border p-3 rounded flex justify-between">
+                  <div key={u._id} className="border border-gray-200 dark:border-gray-700 p-3 rounded flex justify-between">
                     <div>
-                      <p className="font-semibold">{u.name} ({u.email})</p>
-                      <p className="text-sm text-gray-600">role: {u.role} | interests: {(u.interests||[]).join(", ")}</p>
+                      <p className="font-semibold text-foreground">{u.name} ({u.email})</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">role: {u.role} | interests: {(u.interests||[]).join(", ")}</p>
                     </div>
                   </div>
                 ))}
